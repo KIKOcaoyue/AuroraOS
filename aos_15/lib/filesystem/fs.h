@@ -1,0 +1,66 @@
+#ifndef __FILESYSTEM_FS_H
+#define __FILESYSTEM_FS_H
+
+#include "stdint.h"
+
+#define MAX_FILES_PER_PART 4096
+#define BITS_PER_SECTOR    4096
+#define SECTOR_SIZE        512
+#define BLOCK_SIZE         SECTOR_SIZE
+#define MAX_PATH_LEN       512
+
+/* 文件类型 */
+enum file_types
+{
+    FT_UNKNOWN,            //不支持的文件类型
+    FT_REGULAR,            //普通文件
+    FT_DIRECTORY           //目录
+};
+
+/* 打开文件的选项 */
+enum oflags
+{
+    O_RDONLY,              //read only
+    O_WRONLY,              //write only
+    O_RDWR,                //read write
+    O_CREAT = 4            //创建
+};
+
+enum whence
+{
+    SEEK_SET = 1,
+    SEEK_CUR,
+    SEEK_END
+};
+
+/* 用来记录查找文件过程中已找到的上级路径, 也就是查找文件过程中"走过的地方" */
+typedef struct path_search_record
+{
+    char searched_path[MAX_PATH_LEN];                 //查找过程中的父路径
+    struct dir* parent_dir;                           //文件或目录所在的直接父目录
+    enum file_types file_type;
+}path_search_record;
+
+struct stat
+{
+    uint32_t st_no;                                  //inode编号
+    uint32_t st_size;                                //尺寸
+    enum file_types st_filetype;                     //文件类型
+};
+
+extern struct PARTITION* cur_part;
+
+int32_t sys_write(int32_t fd, const void* buf, uint32_t count);
+int32_t sys_open(const char* pathname, uint8_t flag);
+int32_t sys_read(int32_t fd, void* buf, uint32_t count);
+int32_t sys_close(int32_t fd);
+int32_t sys_lseek(int32_t fd, int32_t offset, uint8_t whence);
+int32_t sys_mkdir(const char* pathname);
+struct dir* sys_opendir(const char* name);
+int32_t sys_closedir(struct dir* dir);
+struct dir_entry* sys_readdir(struct dir* dir);
+void sys_rewinddir(struct dir* dir);
+
+void filesys_init();
+
+#endif 
